@@ -1,0 +1,529 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <!--로컬 media 폴더에서 이미지 읽어올 경우 앞에 로컬주소 넣어주기 위해 필요한 코드-->
+  {% load static %}
+
+  <title>egram</title>
+  <!--부트스트랩 적용-->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css" rel="stylesheet"
+    integrity="sha384-rbsA2VBKQhggwzxH7pPCaAqO46MgnOM80zW1RWuH61DGLwZJEdK2Kadq2F9CUG65" crossorigin="anonymous">
+  <!--구글미터리얼 아이콘 적용-->
+  <link
+    href="https://fonts.googleapis.com/css?family=Material+Icons|Material+Icons+Outlined|Material+Icons+Two+Tone|Material+Icons+Round|Material+Icons+Sharp"
+    rel="stylesheet">
+  <!--부트스트랩 적용-->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"
+    integrity="sha384-kenU1KFdBIe4zVF0s0G1M5b4hcpxyD9F7jL+jjXkk+Q2h455rYXK/7HAuoJl+0I4" crossorigin="anonymous">
+  </script>
+  <!--CSS-->
+  <style>
+    a {
+      text-decoration: none;
+    }
+
+    .profile_all_view {
+      background-color: #F9F8FA;
+      display: flex;
+      flex-direction: row;
+      text-align: center;
+      justify-content: center;
+      padding-top: 60px;
+    }
+
+    .profile_view {
+      display: flex;
+      flex-direction: row;
+      height: 200px;
+    }
+
+    .profile {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .profile_img {
+      width: 120px;
+      height: 120px;
+      border-radius: 90%;
+      overflow: hidden;
+      margin: 20px 50px;
+    }
+
+    .profile_contents {
+      margin: 25px;
+    }
+
+    .modal_overlay {
+      width: 100%;
+      height: 100%;
+      position: absolute;
+      left: 0;
+      top: 0;
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background: rgba(0, 0, 0, 0.8);
+      backdrop-filter: blur(1.5px);
+      -webkit-backdrop-filter: blur(1.5px);
+      z-index: 9999
+    }
+
+    .modal_window {
+      background: white;
+      backdrop-filter: blur(13.5px);
+      -webkit-backdrop-filter: blur(13.5px);
+      border-radius: 10px;
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      width: 650px;
+      height: 450px;
+      position: relative;
+      padding: 10px;
+    }
+
+    .modal_title {
+      display: flex;
+      flex-direction: row;
+      justify-content: space-between;
+    }
+
+    .modal_image_upload {
+      display: flex;
+      outline: 2px dashed black;
+      outline-offset: -10px;
+      align-items: center;
+      justify-content: center;
+      transition: all .15s ease-in-out;
+      width: 97%;
+      height: 95%;
+    }
+
+    .modal_add_content_image {
+      display: flex;
+      flex-direction: row;
+      width: 620px;
+      height: 430px;
+
+    }
+
+    .modal_image_upload2 {
+      width: 55%;
+      height: 95%;
+    }
+
+    .modal_image_content {
+      display: flex;
+      flex-direction: column;
+      width: 45%;
+      height: 95%;
+      padding: 5px;
+    }
+
+    .profile_contents_menu {
+      border-top: solid 0.5px gray;
+      width: 100%;
+    }
+    .contents_menus{
+      display: flex;
+      flex-direction: row;
+      justify-content: center;
+    }
+    .contents_menu{
+      margin: 0 30px;
+      display: flex;
+      cursor: pointer;
+    }
+    .my_feed{
+      display: flex;
+      margin: 0 50px;
+      /* justify-content: center; */
+      flex-wrap: wrap;
+    }
+    .my_feed_img {
+      width: 280px; 
+      height: 250px; 
+      margin: 5px;
+    }
+    .my_favorite{
+      display: flex;
+      margin: 0 50px;
+      /* justify-content: center; */
+      flex-wrap: wrap;
+      display: none;
+    }
+    .my_bookmark{
+      display: flex;
+      margin: 0 50px;
+      /* justify-content: center; */
+      flex-wrap: wrap;
+      display: none;
+    }
+  </style>
+</head>
+
+<body>
+  <!--navigator bar-->
+  <nav class="navbar navbar-expand-lg bg-light" style="position: fixed; width: 100%; z-index:9999">
+    <div class="container-fluid" style="justify-content: space-between; flex-wrap: nowrap; min-width: 800px;">
+      <a class="navbar-brand" href="{%url 'main' %}"><img style="height: 30px; object-fit: contain"
+          src="https://www.instagram.com/static/images/web/mobile_nav_type_logo-2x.png/1b47f9d0e595.png"></a>
+      <input class="form-control me-2" style="width: 300px; box-shadow: none; outline: none;" type="search"
+        placeholder="Search" aria-label="Search">
+      <div style="display: flex; box-sizing:content-box;">
+        <span id="nav_home" class="material-icons" style="cursor: pointer;">home</span>
+        <span class="material-icons-outlined">send</span>
+        <span id="nav_bar_add_box" class="material-icons-outlined">add_box</span>
+        <span class="material-icons-outlined" style="padding-right: 3px;">favorite_border</span>
+        <div class="dropdown">
+          <a href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+            <div style="width: 29px; height: 29px; border-radius: 90%;overflow: hidden;">
+              <img class="profile" src="{% get_media_prefix %}{{user.profile_image}}">
+            </div>
+          </a>
+          <ul class="dropdown-menu" style="left: -157px;">
+            <li><a class="dropdown-item" href="#">프로필</a></li>
+            <li>
+              <hr class="dropdown-divider">
+            </li>
+            <li><a class="dropdown-item" href="{% url 'user:logout' %}">로그아웃</a></li>
+          </ul>
+        </div>
+
+      </div>
+    </div>
+  </nav>
+  <!--navigator bar end-->
+  <div class="all_view">
+    <div class="profile_all_view">
+      <!--profile view-->
+      <div class="profile_view">
+        <div class="profile_img">
+          <img class="profile" src="{% get_media_prefix %}{{user.profile_image}}">
+        </div>
+        <div class="profile_contents">
+          <div style="display: flex; flex-direction: row; align-items: center;">
+            <div style="font-size: 26px; margin-right: 15px;">{{user.nickname}}</div>
+            <button id="btn_profileimg_upload" style="margin: 7px 15px;">프로필 사진 편집</button>
+            <input type="file" id="input_profileimg_upload" style="display: none;" onchange="uploadProfileImg()" />
+            <span class="material-icons-outlined" style="margin: 7px 15px;">settings</span>
+          </div>
+          <div style="margin: 10px 6px;">게시물 {{feed_count}} 팔로워 111 팔로잉 111</div>
+          <div style="text-align: left; margin: 7px;">
+            <b>{{user.name}}</b>
+          </div>
+        </div>
+      </div>
+      <!--profile view end-->
+    </div>
+    <!-- view-->
+    <div class='profile_contents_menu' style="padding: 20px; 0">
+        <div class="contents_menus">
+          <div class="contents_menu" id="feed_label">
+            <span class="material-icons-outlined">dashboard</span>
+            게시물
+          </div>
+          <div class="contents_menu" id="like_label">
+            <span class="material-icons-outlined">favorite_border</span>
+            좋아요
+          </div>
+          <div class="contents_menu" id="bookmark_label">
+            <span class="material-icons-outlined">bookmark_border</span>
+            북마크
+          </div>
+        </div>
+    </div>
+    <div class="contents_views" style="width: 1000px; margin: 0 auto;">
+      <div class="my_feed">
+        {% for feed in feed_list %}
+        <div>
+          {% if 'http' in feed.image %}     
+          <img class="my_feed_img" src="{{feed.image}}">
+          {% else %}
+          <img class="my_feed_img" src="{% get_media_prefix %}{{feed.image}}">
+          {% endif %}
+        </div>
+        {% endfor %}
+      </div>
+      <div class="my_favorite">
+        {% for feed in like_feed_list %}
+        <div>
+          {% if 'http' in feed.image %}     
+          <img class="my_feed_img" src="{{feed.image}}">
+          {% else %}
+          <img class="my_feed_img" src="{% get_media_prefix %}{{feed.image}}">
+          {% endif %}
+        </div>
+        {% endfor %}
+      </div>
+      <div class="my_bookmark">
+        {% for feed in bookmark_feed_list %}
+        <div>
+          {% if 'http' in feed.image %}     
+          <img class="my_feed_img" src="{{feed.image}}">
+          {% else %}
+          <img class="my_feed_img" src="{% get_media_prefix %}{{feed.image}}">
+          {% endif %}
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+    <!-- view-->
+    <!--1. Modal window-->
+    <div id="modal_add_feed" class="modal_overlay">
+      <div class="modal_window">
+        <div class="modal_title">
+          <div class="modal_title_side"></div>
+          <div>새 게시물</div>
+          <div class="modal_title_side">
+            <span id="close_modal" class="material-icons-outlined">close</span>
+          </div>
+        </div>
+        <div class="modal_image_upload">
+          <span style="text-align: center">여기에 사진을 끌려놓으세요</span>
+        </div>
+      </div>
+    </div>
+    <!--1.modal window end-->
+    <!--2. Modal window-->
+    <div id="modal_add_content" class="modal_overlay">
+      <div class="modal_window">
+        <div class="modal_title">
+          <div class="modal_title_side"></div>
+          <div>새 게시물</div>
+          <div class="modal_title_side">
+            <span id="close_modal2" class="material-icons-outlined">close</span>
+          </div>
+        </div>
+        <div class="modal_add_content_image">
+          <div class="modal_image_upload2"></div>
+          <div class="modal_image_content">
+            <div class="feed_name" style="display: flex; flex-direction: row;">
+              <div class="box img_1">
+                <img id="upload_profile" class="profile" src="{% get_media_prefix %}{{user.profile_image}}">
+              </div>
+              <div class="my_info">
+                <div id="upload_user_id" style="font-weight: bold;">{{user.nickname}}</div>
+              </div>
+            </div>
+            <div style="height: 430px">
+              <textarea id="input_content" class="feed_content_textarea form-control col-sm-5" rows="13"
+                placeholder="설명을 입력하세요..."></textarea>
+            </div>
+            <div style="width: 100%; text-align: center">
+              <button id="button_add_feed" type="button" class="btn btn-primary" style="width: 268px">
+                공유하기</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!--2.modal window End-->
+  </div>
+
+  <!--JQuery script-->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"
+    integrity="sha512-894YE6QWD5I59HgZOGReFYm4dnWc1Qt5NtvYSaNcOP+u1T9qYdvdihz0PPSiiqn/+/3e7Jo4EaG7TubfWGUrMQ=="
+    crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+  <script>
+    $('#like_label').on('click', () =>{
+      console.log('my_favorite')
+      $(".my_feed").css({
+        display:'none'
+      });
+      $('.my_bookmark').css({
+        display: 'none'
+      });
+      $('.my_favorite').css({
+        display: 'flex'
+      });
+    });
+    $('#bookmark_label').on('click', () =>{
+      console.log('my_bookmark')
+      $(".my_feed").css({
+        display:'none'
+      });
+      $('.my_bookmark').css({
+        display:'flex'
+      });
+      $('.my_favorite').css({
+        display:'none'
+      });
+    });
+    $('#feed_label').on('click', () =>{
+      console.log('my_feed')
+      $(".my_feed").css({
+        display:'flex'
+      });
+      $('.my_bookmark').css({
+        display:'none'
+      });
+      $('.my_favorite').css({
+        display:'none'
+      });
+    });
+    $('#nav_home').click(function () {
+      location.replace('{%url "main" %}')
+    });
+    $('#btn_profileimg_upload').click(function () {
+      $('#input_profileimg_upload').click();
+    });
+    $('#close_modal').on("click", () => {
+      closeModal();
+    });
+    $('#nav_bar_add_box').click(function () {
+      $('#modal_add_feed').css({
+        display: 'flex'
+      });
+      $(document.body).css({
+        overflow: 'hidden'
+      });
+    });
+
+    function closeModal() {
+      $('.modal_overlay').css({
+        display: 'none'
+      });
+      $(document.body).css({
+        overflowY: 'visible'
+      });
+    };
+
+    function uploadProfileImg() {
+      let file = $('#input_profileimg_upload')[0].files[0];
+      console.log(file);
+      let email = "{{ user.email }}";
+
+      let fd = new FormData();
+
+      fd.append('file', file);
+      fd.append('email', email);
+
+      $.ajax({
+        url: "{% url 'user:uploadprofile' %}",
+        data: fd,
+        method: 'POST',
+        processData: false,
+        contentType: false,
+        success: function (data) {
+          console.log("profile upload 성공");
+        },
+        error: function (request, status, error) {
+          console.log("profile upload 에러");
+        },
+        complete: function () {
+          console.log("완료");
+          location.replace("{% url 'profile' %}")
+        }
+      });
+      $(".modal_image_upload")
+        .on('dragover', dragOver)
+        .on('dragleave', dragOver)
+        .on('drop', uploadFiles);
+
+      function closeModal() {
+        $('.modal_overlay').css({
+          display: 'none'
+        });
+        $(document.body).css({
+          overflowY: 'visible'
+        });
+      };
+
+      function dragOver(e) {
+        e.stopPropagation();
+        e.preventDefault(); //여기까지는 겹쳐져있는 다른 윈도우에 영향을 끼치지 않게 하기 위한 코드
+        //실제 동작 코드
+        //dragOver(e);
+        if (e.type == 'dragover') {
+          $(e.target).css({
+            'background-color': 'black',
+            'outline-offset': '-20px'
+          });
+        } else {
+          $(e.target).css({
+            'background-color': 'white',
+            'outline-offset': '-10px'
+          })
+        }
+      }
+
+      function uploadFiles(e) {
+        e.stopPropagation();
+        e.preventDefault();
+
+        dragOver(e);
+
+        e.dataTransfer = e.originalEvent.dataTransfer;
+        var files = e.dataTransfer.files;
+        if (files.length > 1) {
+          alert('하나만 올려주세요');
+          return;
+        }
+
+        if (files[0].type.match(/image.*/)) {
+          $('#close_modal2').on("click", () => {
+            closeModal();
+          });
+          $('#modal_add_feed').css({
+            display: 'none'
+          });
+          $('#modal_add_content').css({
+            display: 'flex'
+          });
+
+          $('.modal_image_upload2').css({
+            'background-image': "url(" + window.URL.createObjectURL(files[0]) + ")",
+            'outline': "none",
+            'background-size': "100%",
+            "background-repeat": "no-repeat",
+            "background-position": "center"
+          });
+
+
+          $('#button_add_feed').click(function () {
+            let file = files[0];
+            let image = files[0].name;
+            let content = $('#input_content').val();
+            let user_id = $('#upload_user_id').text();
+            let profile_image = $('#upload_profile').attr("src");
+
+            let fd = new FormData();
+
+            fd.append('file', file);
+            fd.append('image', image);
+            fd.append('content', content);
+
+            $.ajax({
+              url: "/home/upload",
+              data: fd,
+              method: 'POST',
+              processData: false,
+              contentType: false,
+              success: function (data) { //callback 함수: 성공시 불림
+                console.log("ajax upload : 성공");
+              },
+              error: function (request, status, error) { //callback 함수 : 실패시 불림
+                console.log('ajax upload : error');
+              },
+              complete: function () { //callback 함수 : 성공 실패 둘 다 무조건 불림
+                console.log('ajax upload : 완료')
+                location.reload();
+              }
+            });
+          });
+        } else {
+          alert('이미지가 아닙니다.');
+          return;
+        }
+      }
+    };
+  </script>
+
+</body>
+
+</html>
